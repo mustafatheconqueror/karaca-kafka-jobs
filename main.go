@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	var jobExecutionTime = 1
+	var jobExecutionTime = 20
 
 	gocron.SetLocker(NewMemoryLocker())
 
@@ -16,8 +16,8 @@ func main() {
 
 	var retryJobService = NewRetryJobService()
 
-	gocron.Every(uint64(jobExecutionTime)).Minutes().Loc(location).Lock().Do(retryJobService.ExecuteJob)
-	
+	gocron.Every(uint64(jobExecutionTime)).Seconds().Loc(location).Lock().Do(retryJobService.ExecuteJob)
+
 	log.Println("Started job execution at ", time.Now())
 
 	<-gocron.Start()
