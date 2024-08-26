@@ -20,7 +20,7 @@ func Init(cmd *cobra.Command, args []string) error {
 	}
 
 	brokers := []string{"localhost:9092", "localhost:9093", "localhost:9094"}
-	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": brokers})
+	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": strings.Join(brokers, ",")})
 	if err != nil {
 		log.Fatalf("Failed to create AdminClient: %s", err)
 	}
@@ -29,7 +29,7 @@ func Init(cmd *cobra.Command, args []string) error {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": strings.Join(brokers, ","),
 		"group.id":          "retry-job",
-		"auto.offset.reset": "earliest",
+		"auto.offset.reset": "latest",
 	})
 	if err != nil {
 		log.Fatalf("Failed to create consumer: %s", err)
