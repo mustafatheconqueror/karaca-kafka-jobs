@@ -42,7 +42,7 @@ func (s *Shovel) Run() {
 	}
 
 	for _, errorTopic := range errorTopics {
-		s.consoleLogger.Printf("Started shovel for topic: %s", errorTopic)
+		s.consoleLogger.Printf("*****************Started shovel********************* for topic: %s", errorTopic)
 		shoveledMessageCount := 0
 		startDateForTopic := time.Now().UTC()
 
@@ -53,7 +53,7 @@ func (s *Shovel) Run() {
 		}
 
 		for {
-			msg, err := s.consumer.ReadMessage(-1)
+			msg, err := s.consumer.ReadMessage(20 * time.Second)
 			if err != nil {
 				if err.(kafka.Error).Code() == kafka.ErrTimedOut {
 					break
@@ -82,7 +82,7 @@ func (s *Shovel) Run() {
 			shoveledMessageCount++
 		}
 
-		s.consoleLogger.Printf("Finished shovel for topic: %s. %d messages sent to retry topic", errorTopic, shoveledMessageCount)
+		s.consoleLogger.Printf(" ---------------- ----------------Finished shovel for topic: %s. %d messages sent to retry topic ----------------", errorTopic, shoveledMessageCount)
 		err := s.consumer.Unsubscribe()
 		if err != nil {
 			return

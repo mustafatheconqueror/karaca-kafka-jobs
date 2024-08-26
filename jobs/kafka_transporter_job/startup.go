@@ -1,4 +1,4 @@
-package kafka_retry_job
+package kafka_transporter_job
 
 import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -14,7 +14,7 @@ import (
 func Init(cmd *cobra.Command, args []string) error {
 
 	topicConfig := TopicConfig{
-		ErrorSuffix:     "_error",
+		DeadSuffix:      "_dead",
 		RetrySuffix:     "_retry",
 		MetadataTimeout: 10,
 	}
@@ -28,7 +28,7 @@ func Init(cmd *cobra.Command, args []string) error {
 
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  strings.Join(brokers, ","),
-		"group.id":           "retry-job",
+		"group.id":           "transporter-job",
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": true,
 		"session.timeout.ms": 10000,
@@ -46,24 +46,17 @@ func Init(cmd *cobra.Command, args []string) error {
 
 	consoleLogger := log.New(os.Stdout, "INFO: ", log.LstdFlags)
 
-	//todo: create, persistence and service folder maybe
+	// Todo: create, persistence and service folder maybe
 	topicRepo := NewTopicRepository(adminClient, topicConfig)
 	shovel := NewShovel(consumer, producer, topicRepo, topicConfig, consoleLogger)
 
-	var jobExecutionTime = 30
-
 	gocron.SetLocker(shared.NewMemoryLocker())
 
-	location, _ := time.LoadLocation("Europe/Istanbul")
+	transporterJobService := NewTransporterJobService(shovel)
 
-	retryJobService := NewRetryJobService(shovel)
+	log.Println(" ---------------- Started Transporter job execution at ----------------", time.Now())
 
-	gocron.Every(uint64(jobExecutionTime)).Seconds().Loc(location).Lock().Do(retryJobService.ExecuteJob)
-
-	log.Println(" ---------------- Started Retry job execution at ----------------", time.Now())
-
-	<-gocron.Start()
+	transporterJobService.ExecuteJob()
 
 	return nil
-
 }
